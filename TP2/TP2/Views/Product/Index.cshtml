@@ -1,0 +1,32 @@
+@model IEnumerable<TP2.Models.Product>
+@{
+    ViewData["Title"] = "Liste des produits";
+}
+
+<h2>Tous les articles</h2>
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nouvel Article</a>
+</p>
+
+<div class="d-flex flex-wrap">
+    @foreach (var product in Model)
+    {
+        var photoPath = "~/images/" + (product.Image ?? "noimage.jpg");
+        <div class="card m-2" style="width: 18rem;">
+            <div class="card-header text-center">
+                <h5><b>Nom: </b>@product.Name</h5>
+            </div>
+            <img class="card-img-top imageThumbnail" src="@photoPath" asp-append-version="true" />
+            <div class="card-body">
+                <p class="card-text"><b>Prix: </b>@product.Price DT</p>
+                <p class="card-text"><b>Quantité: </b>@product.QteStock</p>
+                <p class="card-text"><b>Catégorie: </b>@(product.Category?.CategoryName)</p>
+            </div>
+            <div class="card-footer text-center">
+                <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId" class="btn btn-primary btn-sm">View</a>
+                <a asp-action="Edit" asp-controller="Product" asp-route-id="@product.ProductId" class="btn btn-warning btn-sm">Edit</a>
+                <a asp-action="Delete" asp-controller="Product" asp-route-id="@product.ProductId" class="btn btn-danger btn-sm">Delete</a>
+            </div>
+        </div>
+    }
+</div>
