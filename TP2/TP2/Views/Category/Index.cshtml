@@ -1,15 +1,20 @@
 @model IEnumerable<TP2.Models.Category>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Catégories";
 }
 
-<h1>Index</h1>
+<h1>Liste des Catégories</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
+<!-- Bouton visible UNIQUEMENT pour Admin et Manager -->
+@if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    </p>
+}
+
+<table class="table table-hover">
     <thead>
         <tr>
             <th>
@@ -18,24 +23,31 @@
             <th>
                 @Html.DisplayNameFor(model => model.Products)
             </th>
-            <th></th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.CategoryName)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Products)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.CategoryId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.CategoryId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.CategoryId">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(model => item.CategoryName)
+                </td>
+                <td>
+                    @Html.DisplayFor(model => item.Products)
+                </td>
+                <td>
+                    <!-- Le lien Details est accessible à tout le monde -->
+                    <a asp-action="Details" asp-route-id="@item.CategoryId" class="btn btn-sm btn-info text-white">Details</a>
+
+                    <!-- Edit et Delete réservés uniquement aux Admins / Managers -->
+                    @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-warning me-1 ms-1">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.CategoryId" class="btn btn-sm btn-danger">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

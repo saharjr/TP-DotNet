@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TP2.Models;
 using TP2.Models.Repositories;
@@ -13,9 +14,23 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("ProductDBConnection")
     ));
 
+// Configuration d'ASP.NET Core Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
+
+// Modification des options de mot de passe
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+});
+
 // Injection des repositories/injjection de dépendances
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -30,6 +45,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

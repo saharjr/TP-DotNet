@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using TP2.Models;
 using TP2.Models.Repositories;
@@ -6,13 +7,14 @@ using TP2.ViewModels;
 
 namespace TP2.Controllers
 {
+    [Authorize(Roles = "Admin, Manager")]
     public class ProductController : Controller
     {
         readonly IProductRepository ProductRepository;
         readonly ICategoryRepository CategRepository;
         private readonly IWebHostEnvironment hostingEnvironment;
 
-        public ProductController(IProductRepository ProdRepository, 
+        public ProductController(IProductRepository ProdRepository,
                                  ICategoryRepository categRepository,
                                  IWebHostEnvironment hostingEnvironment)
         {
@@ -21,16 +23,34 @@ namespace TP2.Controllers
             this.hostingEnvironment = hostingEnvironment;
         }
 
-        // GET: ProductController
-        public ActionResult Index()
+        // GET: ProductController/Index (Accessible par tous avec filtrage et pagination)
+        [AllowAnonymous]
+        public ActionResult Index(int? categoryId, int page = 1)
         {
-            var products = ProductRepository.GetAll();
+            int pageSize = 4; // 4 produits par page
+            ViewData["Categories"] = CategRepository.GetAll(); // Requis pour le menu latéral
+
+            IQueryable<Product> productsQuery = ProductRepository.GetAllProducts();
+            if (categoryId.HasValue)
+            {
+                productsQuery = productsQuery.Where(p => p.CategoryId == categoryId);
+            }
+
+            var totalProducts = productsQuery.Count();
+            var products = productsQuery.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
+            ViewBag.CurrentPage = page;
+            ViewBag.CategoryId = categoryId;
+
             return View(products);
         }
 
         // GET: ProductController/Details/5
+        [AllowAnonymous]
         public ActionResult Details(int id)
         {
+            ViewData["Categories"] = CategRepository.GetAll();
             var product = ProductRepository.GetById(id);
             if (product == null) return NotFound();
             return View(product);
@@ -39,6 +59,7 @@ namespace TP2.Controllers
         // GET: ProductController/Create
         public ActionResult Create()
         {
+            ViewData["Categories"] = CategRepository.GetAll();
             ViewBag.CategoryId = new SelectList(CategRepository.GetAll(), "CategoryId", "CategoryName");
             return View();
         }
@@ -54,17 +75,11 @@ namespace TP2.Controllers
                 if (model.ImagePath != null)
                 {
                     string uploadsFolder = Path.Combine(hostingEnvironment.WebRootPath, "images");
-
-                    // 1. Vérifier et créer le dossier s'il n'existe pas
-                    if (!Directory.Exists(uploadsFolder))
-                    {
-                        Directory.CreateDirectory(uploadsFolder);
-                    }
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
                     uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImagePath.FileName;
                     string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-                    // 2. Utiliser 'using' pour libérer et fermer le fichier après écriture
                     using (var fileStream = new FileStream(filePath, FileMode.Create))
                     {
                         model.ImagePath.CopyTo(fileStream);
@@ -84,7 +99,7 @@ namespace TP2.Controllers
                 return RedirectToAction("Details", new { id = newProduct.ProductId });
             }
 
-            // 3. Ré-alimenter le ViewBag si le formulaire contient des erreurs de validation
+            ViewData["Categories"] = CategRepository.GetAll();
             ViewBag.CategoryId = new SelectList(CategRepository.GetAll(), "CategoryId", "CategoryName");
             return View(model);
         }
@@ -92,6 +107,7 @@ namespace TP2.Controllers
         // GET: ProductController/Edit/5
         public ActionResult Edit(int id)
         {
+            ViewData["Categories"] = CategRepository.GetAll();
             Product product = ProductRepository.GetById(id);
             if (product == null) return NotFound();
 
@@ -115,11 +131,14 @@ namespace TP2.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Edit(EditViewModel model)
         {
+            ViewData["Categories"] = CategRepository.GetAll();
             ViewBag.CategoryId = new SelectList(CategRepository.GetAll(), "CategoryId", "CategoryName");
 
             if (ModelState.IsValid)
             {
                 Product product = ProductRepository.GetById(model.ProductId);
+                if (product == null) return NotFound();
+
                 product.Name = model.Name;
                 product.Price = model.Price;
                 product.QteStock = model.QteStock;
@@ -130,20 +149,14 @@ namespace TP2.Controllers
                     if (model.ExistingImagePath != null)
                     {
                         string filePath = Path.Combine(hostingEnvironment.WebRootPath, "images", model.ExistingImagePath);
-                        if (System.IO.File.Exists(filePath))
-                        {
-                            System.IO.File.Delete(filePath);
-                        }
+                        if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
                     }
 
                     product.Image = ProcessUploadedFile(model);
                 }
 
-                Product updatedProduct = ProductRepository.Update(product);
-                if (updatedProduct != null)
-                    return RedirectToAction("Index");
-                else
-                    return NotFound();
+                ProductRepository.Update(product);
+                return RedirectToAction("Index");
             }
 
             return View(model);
@@ -152,11 +165,9 @@ namespace TP2.Controllers
         // GET: ProductController/Delete/5
         public ActionResult Delete(int id)
         {
+            ViewData["Categories"] = CategRepository.GetAll();
             var product = ProductRepository.GetById(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+            if (product == null) return NotFound();
             return View(product);
         }
 
@@ -168,20 +179,23 @@ namespace TP2.Controllers
             var product = ProductRepository.GetById(id);
             if (product != null)
             {
-                // Supprimer l'image physique du dossier wwwroot/images si elle existe
                 if (!string.IsNullOrEmpty(product.Image))
                 {
                     string filePath = Path.Combine(hostingEnvironment.WebRootPath, "images", product.Image);
-                    if (System.IO.File.Exists(filePath))
-                    {
-                        System.IO.File.Delete(filePath);
-                    }
+                    if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath);
                 }
-
-                // Supprimer l'article de la base de données
                 ProductRepository.Delete(id);
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // Action de Recherche
+        [AllowAnonymous]
+        public ActionResult Search(string val)
+        {
+            ViewData["Categories"] = CategRepository.GetAll();
+            var result = ProductRepository.FindByName(val ?? "");
+            return View("Index", result);
         }
 
         [NonAction]
@@ -191,6 +205,8 @@ namespace TP2.Controllers
             if (model.ImagePath != null)
             {
                 string uploadsFolder = Path.Combine(hostingEnvironment.WebRootPath, "images");
+                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
                 uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImagePath.FileName;
                 string filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -199,13 +215,6 @@ namespace TP2.Controllers
                 }
             }
             return uniqueFileName;
-        }
-
-        // Action de Recherche
-        public ActionResult Search(string val)
-        {
-            var result = ProductRepository.FindByName(val ?? "");
-            return View("Index", result);
         }
     }
 }

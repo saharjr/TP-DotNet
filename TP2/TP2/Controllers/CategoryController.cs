@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TP2.Models;
 using TP2.Models.Repositories;
 
 namespace TP2.Controllers
 {
+    [Authorize(Roles = "Admin, Manager")]
     public class CategoryController : Controller
     {
         readonly ICategoryRepository CategRepository;
@@ -15,15 +17,19 @@ namespace TP2.Controllers
         }
 
         // GET: CategoryController (Afficher la liste des catégories)
+        [AllowAnonymous]
         public ActionResult Index()
         {
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger le menu latéral
             var categories = CategRepository.GetAll();
             return View(categories);
         }
 
         // GET: CategoryController/Details/5 (Détails d'une catégorie)
+        [AllowAnonymous]
         public ActionResult Details(int id)
         {
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger le menu latéral
             var category = CategRepository.GetById(id);
             if (category == null)
             {
@@ -35,6 +41,7 @@ namespace TP2.Controllers
         // GET: CategoryController/Create (Formulaire de création)
         public ActionResult Create()
         {
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger le menu latéral
             return View();
         }
 
@@ -48,12 +55,15 @@ namespace TP2.Controllers
                 CategRepository.Add(category);
                 return RedirectToAction(nameof(Index));
             }
+
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger si validation échoue
             return View(category);
         }
 
         // GET: CategoryController/Edit/5 (Formulaire de modification)
         public ActionResult Edit(int id)
         {
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger le menu latéral
             var category = CategRepository.GetById(id);
             if (category == null)
             {
@@ -72,12 +82,15 @@ namespace TP2.Controllers
                 CategRepository.Update(category);
                 return RedirectToAction(nameof(Index));
             }
+
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger si validation échoue
             return View(category);
         }
 
         // GET: CategoryController/Delete/5 (Page de confirmation de suppression)
         public ActionResult Delete(int id)
         {
+            ViewData["Categories"] = CategRepository.GetAll(); // Charger le menu latéral
             var category = CategRepository.GetById(id);
             if (category == null)
             {
