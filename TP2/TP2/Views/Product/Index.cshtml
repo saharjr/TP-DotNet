@@ -23,9 +23,25 @@
             </div>
             <img class="card-img-top imageThumbnail" src="@photoPath" asp-append-version="true" style="height:200px; object-fit:contain;" />
             <div class="card-body">
-                <p class="card-text"><b>Prix: </b>@product.Price DT</p>
-                <p class="card-text"><b>Quantité: </b>@product.QteStock</p>
-                <p class="card-text"><b>Catégorie: </b>@(product.Category?.CategoryName)</p>
+                <p class="card-text mb-1"><b>Prix: </b>@product.Price DT</p>
+                <p class="card-text mb-1"><b>Quantité: </b>@product.QteStock</p>
+                <p class="card-text mb-2"><b>Catégorie: </b>@(product.Category?.CategoryName)</p>
+
+                <!-- Affichage des étoiles et du nombre d'avis -->
+                <div class="text-warning mb-2">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= Math.Round(product.AverageRating))
+                        {
+                            <span>★</span>
+                        }
+                        else
+                        {
+                            <span class="text-secondary">☆</span>
+                        }
+                    }
+                    <small class="text-muted ms-1">(@(product.Reviews?.Count ?? 0) avis)</small>
+                </div>
             </div>
             <div class="card-footer text-center">
                 <!-- Le bouton Détails est visible par tout le monde -->

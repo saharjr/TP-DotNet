@@ -1,0 +1,123 @@
+﻿@model TP2.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Analytics";
+}
+
+<div class="container-fluid py-3">
+    <h2 class="mb-4 text-primary"><i class="bi bi-speedometer2"></i> Tableau de bord Administrateur</h2>
+
+    <!-- Cartes KPI -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm border-0">
+                <div class="card-body text-center py-3">
+                    <h6 class="text-uppercase fw-bold opacity-75">Chiffre d'Affaires</h6>
+                    <h3 class="mb-0">@Model.TotalRevenue.ToString("N2") DT</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm border-0">
+                <div class="card-body text-center py-3">
+                    <h6 class="text-uppercase fw-bold opacity-75">Commandes Totales</h6>
+                    <h3 class="mb-0">@Model.TotalOrders</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm border-0">
+                <div class="card-body text-center py-3">
+                    <h6 class="text-uppercase fw-bold opacity-75">Produits en Catalogue</h6>
+                    <h3 class="mb-0">@Model.TotalProducts</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm border-0">
+                <div class="card-body text-center py-3">
+                    <h6 class="text-uppercase fw-bold opacity-75">Catégories</h6>
+                    <h3 class="mb-0">@Model.TotalCategories</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques Chart.js -->
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="card-title mb-0">Évolution des ventes (7 derniers jours)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesLineChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="card-title mb-0">Répartition des ventes par catégorie</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryPieChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- CDN Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Graphique des ventes par date (Bar Chart)
+        const dateLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DateLabels));
+        const dailyRevenue = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailyRevenue));
+
+        new Chart(document.getElementById('salesLineChart'), {
+            type: 'bar',
+            data: {
+                labels: dateLabels,
+                datasets: [{
+                    label: 'Revenus (DT)',
+                    data: dailyRevenue,
+                    backgroundColor: 'rgba(13, 110, 253, 0.75)',
+                    borderColor: 'rgb(13, 110, 253)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Graphique par catégorie (Doughnut Chart)
+        const categoryNames = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategoryNames));
+        const categorySales = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CategorySales));
+
+        new Chart(document.getElementById('categoryPieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: categoryNames.length ? categoryNames : ['Aucune vente'],
+                datasets: [{
+                    data: categorySales.length ? categorySales : [1],
+                    backgroundColor: [
+                        '#0d6efd', '#198754', '#ffc107', '#0dcaf0', '#6c757d', '#d63384'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+}

@@ -6,5 +6,7 @@ namespace TP2.Models.Repositories
     {
         Order GetById(int Id);
         void Add(Order o);
+        List<Order> GetOrdersByUserId(string userId);
+        List<Order> GetAllOrders(); // <--- Doit retourner List<Order>
     }
 }

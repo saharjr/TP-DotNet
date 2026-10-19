@@ -23,6 +23,7 @@ namespace TP2.Models.Repositories
         {
             return context.Products
                 .Include(x => x.Category)
+                .Include(x => x.Reviews)
                 .SingleOrDefault(x => x.ProductId == id);
         }
 
@@ -80,7 +81,9 @@ namespace TP2.Models.Repositories
 
         public IQueryable<Product> GetAllProducts()
         {
-            return context.Products.Include(p => p.Category);
+            return context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Reviews);
         }
     }
 }

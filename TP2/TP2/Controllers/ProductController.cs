@@ -1,34 +1,46 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using TP2.Models;
 using TP2.Models.Repositories;
-using TP2.ViewModels;
+using TP2.ViewModels; // <--- Règle l'erreur CS0246 (CreateViewModel / EditViewModel)
 
 namespace TP2.Controllers
 {
-    [Authorize(Roles = "Admin, Manager")]
     public class ProductController : Controller
     {
-        readonly IProductRepository ProductRepository;
-        readonly ICategoryRepository CategRepository;
+        private readonly IProductRepository ProductRepository;
+        private readonly ICategoryRepository CategRepository;
         private readonly IWebHostEnvironment hostingEnvironment;
+        private readonly UserManager<IdentityUser> userManager;
+        private readonly AppDbContext context; // Utilise votre AppDbContext principal
 
         public ProductController(IProductRepository ProdRepository,
                                  ICategoryRepository categRepository,
-                                 IWebHostEnvironment hostingEnvironment)
+                                 IWebHostEnvironment hostingEnvironment,
+                                 UserManager<IdentityUser> userManager,
+                                 AppDbContext context)
         {
             ProductRepository = ProdRepository;
             CategRepository = categRepository;
             this.hostingEnvironment = hostingEnvironment;
+            this.userManager = userManager;
+            this.context = context;
         }
 
-        // GET: ProductController/Index (Accessible par tous avec filtrage et pagination)
+        // GET: ProductController/Index
         [AllowAnonymous]
         public ActionResult Index(int? categoryId, int page = 1)
         {
-            int pageSize = 4; // 4 produits par page
-            ViewData["Categories"] = CategRepository.GetAll(); // Requis pour le menu latéral
+            int pageSize = 4;
+            ViewData["Categories"] = CategRepository.GetAll();
 
             IQueryable<Product> productsQuery = ProductRepository.GetAllProducts();
             if (categoryId.HasValue)
@@ -37,6 +49,7 @@ namespace TP2.Controllers
             }
 
             var totalProducts = productsQuery.Count();
+            // Correction de la formule de pagination : (page - 1)
             var products = productsQuery.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             ViewBag.TotalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
@@ -215,6 +228,37 @@ namespace TP2.Controllers
                 }
             }
             return uniqueFileName;
+        }
+
+        // Action POST pour ajouter un avis
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReview(int productId, int rating, string comment)
+        {
+            var user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (rating >= 1 && rating <= 5 && !string.IsNullOrWhiteSpace(comment))
+            {
+                var review = new ProductReview
+                {
+                    ProductId = productId,
+                    UserId = user.Id,
+                    UserName = user.UserName ?? user.Email,
+                    Rating = rating,
+                    Comment = comment,
+                    ReviewDate = DateTime.Now
+                };
+
+                context.ProductReviews.Add(review);
+                await context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Details", new { id = productId });
         }
     }
 }

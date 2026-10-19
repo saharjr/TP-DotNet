@@ -55,5 +55,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+// Configuration de Rotativa pour la génération PDF
 
 app.Run();

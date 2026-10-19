@@ -1,0 +1,84 @@
+﻿@model TP2.Models.Order
+@{
+    Layout = null; // Pas de menu ni de footer pour le PDF
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Facture #@Model.Id</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; color: #333; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #007bff; padding-bottom: 15px; margin-bottom: 30px; }
+        .company-title { font-size: 24px; font-weight: bold; color: #007bff; }
+        .invoice-title { font-size: 22px; text-align: right; font-weight: bold; }
+        .section-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .table th { background-color: #343a40; color: #fff; padding: 10px; text-align: left; }
+        .table td { padding: 10px; border-bottom: 1px solid #dee2e6; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .total-box { text-align: right; font-size: 18px; margin-top: 20px; font-weight: bold; color: #28a745; }
+        .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<script>
+    // Déclenche automatiquement la fenêtre d'impression / Enregistrer en PDF
+    window.onload = function() { window.print(); }
+</script>
+<body>
+
+    <table style="width:100%;">
+        <tr>
+            <td style="width:50%;">
+                <div class="company-title">E-Commerce Store</div>
+                <div>Sfax, Route Tunis</div>
+                <div>Email : contact@ecommerce.tn</div>
+            </td>
+            <td style="width:50%; text-align:right;">
+                <div class="invoice-title">FACTURE N° #@Model.Id</div>
+                <div>Date : @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 30px;" class="section-box">
+        <h4 style="margin-top:0; color:#007bff;">Informations Client & Livraison</h4>
+        <div><strong>Nom Client :</strong> @Model.CustomerName</div>
+        <div><strong>Email :</strong> @Model.Email</div>
+        <div><strong>Adresse de livraison :</strong> @Model.Address</div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th class="text-center">Quantité</th>
+                <th class="text-right">Prix Unitaire</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.ProductName</td>
+                    <td class="text-center">@item.Quantity</td>
+                    <td class="text-right">@item.Price.ToString("N2") DT</td>
+                    <td class="text-right">@((item.Price * item.Quantity).ToString("N2")) DT</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="total-box">
+        Montant Total Réglé : @Model.TotalAmount.ToString("N2") DT
+    </div>
+
+    <div class="footer">
+        Merci pour votre confiance ! Pour toute question concernant cette facture, contactez notre support.
+    </div>
+
+</body>
+</html>

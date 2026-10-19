@@ -25,5 +25,11 @@ namespace TP2.Models
         [Required]
         [Display(Name = "Image :")]
         public string Image { get; set; }
+
+        public List<ProductReview> Reviews { get; set; } = new List<ProductReview>();
+
+        public double AverageRating => Reviews != null && Reviews.Any()
+            ? Math.Round(Reviews.Average(r => r.Rating), 1)
+            : 0;
     }
 }

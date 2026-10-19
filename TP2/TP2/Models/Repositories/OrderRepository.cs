@@ -24,5 +24,22 @@ namespace TP2.Models.Repositories
                 .Include(o => o.Items)
                 .FirstOrDefault(o => o.Id == id);
         }
+
+        public List<Order> GetOrdersByUserId(string userId)
+        {
+            return context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
+        }
+
+        public List<Order> GetAllOrders()
+        {
+            return context.Orders
+                .Include(o => o.Items)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList(); // <--- Retourne la liste C#, PAS un string JSON !
+        }
     }
 }
