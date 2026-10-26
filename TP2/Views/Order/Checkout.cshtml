@@ -1,0 +1,75 @@
+﻿@model IEnumerable<TP2.Models.PanierItem>
+
+@{
+    ViewData["Title"] = "Validation de Commande";
+}
+
+<div class="container py-4">
+    <h2 class="fw-bold mb-4 text-primary">💳 Finaliser ma commande</h2>
+
+    <div class="row g-4">
+        <!-- Résumé du Panier -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white fw-bold">
+                    📦 Résumé de vos articles
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush mb-3">
+                        @foreach (var item in Model)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div>
+                                    <h6 class="my-0 fw-bold">@item.Product.Name</h6>
+                                    <small class="text-muted">@item.Quantity × @item.Product.Price.ToString("N2") DT</small>
+                                </div>
+                                <span class="fw-bold">@((item.Quantity * item.Product.Price).ToString("N2")) DT</span>
+                            </li>
+                        }
+                    </ul>
+                    <div class="d-flex justify-content-between fs-5 fw-bold border-top pt-2">
+                        <span>Total :</span>
+                        <span class="text-success">@ViewBag.CartTotal.ToString("N2") DT</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de Livraison -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white fw-bold">
+                    🚚 Coordonnées de Livraison
+                </div>
+                <div class="card-body">
+                    <form asp-controller="Order" asp-action="CreatePaymentSession" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email du compte</label>
+                            <input type="email" class="form-control" value="@ViewBag.CustomerEmail" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Adresse exacte de livraison</label>
+                            <textarea name="address" class="form-control" rows="3" placeholder="Numéro, Rue, Ville, Code Postal" required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Numéro de Téléphone</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="+216 99 999 999" required />
+                        </div>
+
+                        <div class="p-3 bg-light rounded mb-3 border text-muted small">
+                            🔒 <strong>Paiement Sécurisé :</strong> Vous serez redirigé vers la page sécurisée de Stripe pour effectuer le règlement.
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">
+                            🔒 Payer avec Stripe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

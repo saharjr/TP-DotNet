@@ -1,0 +1,75 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using TP2.Models;
+using TP2.Models.Repositories;
+using Stripe;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services (MVC) to the container.
+builder.Services.AddControllersWithViews();
+
+// Configuration de Entity Framework Core avec SQL Server
+builder.Services.AddDbContextPool<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("ProductDBConnection")
+    ));
+
+// Configuration d'ASP.NET Core Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
+
+// Modification des options de mot de passe
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+});
+
+// Injection des repositories/injjection de dépendances
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+builder.Services.AddControllersWithViews();
+
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
+// Configuration du cache et des sessions ASP.NET Core
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Durée de validité de la session
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseSession(); // Activation de la gestion des sessions
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapStaticAssets();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}")
+    .WithStaticAssets();
+
+// Configuration de Rotativa pour la génération PDF
+
+app.Run();

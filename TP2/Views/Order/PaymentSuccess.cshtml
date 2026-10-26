@@ -1,0 +1,30 @@
+﻿@model TP2.Models.Order
+
+@{
+    ViewData["Title"] = "Paiement Confirmé";
+}
+
+<div class="container text-center py-5">
+    <div class="card shadow-sm mx-auto p-4 border-0" style="max-width: 550px;">
+        <div class="fs-1 text-success mb-2">✅</div>
+        <h2 class="fw-bold text-success mb-3">Paiement Réussi !</h2>
+        <p class="text-muted fs-6">
+            Votre commande <strong>#@Model.Id</strong> a bien été enregistrée et payée.
+        </p>
+
+        <div class="bg-light p-3 rounded text-start mb-4">
+            <p class="mb-1"><strong>Montant réglé :</strong> @Model.TotalAmount.ToString("N2") DT</p>
+            <p class="mb-1"><strong>Statut :</strong> <span class="badge bg-success">@Model.PaymentStatus</span></p>
+            <p class="mb-0"><strong>Livraison à :</strong> @Model.Address</p>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
+            <a asp-controller="Order" asp-action="DownloadInvoice" asp-route-id="@Model.Id" class="btn btn-danger">
+                📄 Télécharger la Facture PDF
+            </a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                Accueil
+            </a>
+        </div>
+    </div>
+</div>

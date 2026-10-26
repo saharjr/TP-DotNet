@@ -1,0 +1,160 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - E-Shop</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+
+                <!-- Bouton d'ouverture du menu latéral : Visible UNIQUEMENT si l'utilisateur est connecté -->
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <button class="btn btn-outline-primary me-2" id="toggleMenu" title="Voir les catégories">
+                        <img src="~/images/categorie.png" alt="Ouvrir la liste des catégories" style="width:24px; height:24px;" />
+                    </button>
+                }
+
+                <!-- Nom de la boutique -->
+                <a class="navbar-brand fw-bold text-primary" asp-controller="Home" asp-action="Index">
+                    🛍️ E-Shop
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Accueil</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Product" asp-action="Index">Catalogue</a>
+                        </li>
+
+                        <!-- Options accessibles UNIQUEMENT après connexion -->
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <!-- Lien Catégories -->
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Category" asp-action="Index">Catégories</a>
+                            </li>
+
+                            <!-- Mon Panier : Masqué pour l'Admin -->
+                            @if (!User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark fw-semibold" asp-controller="Panier" asp-action="Index">🛒 Mon Panier</a>
+                                </li>
+                            }
+
+                            <!-- Mes Commandes : Clients connectés non-admin -->
+                            @if (!User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Order" asp-action="MesCommandes">📦 Mes Commandes</a>
+                                </li>
+                            }
+
+                            <!-- Menu Administration : Admin ou Manager -->
+                            @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-primary fw-bold" data-bs-toggle="dropdown" href="#">⚙️ Administration</a>
+                                    <div class="dropdown-menu">
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a class="dropdown-item fw-bold text-primary" asp-controller="Admin" asp-action="Dashboard">
+                                                📊 Tableau de bord
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                        }
+                                        <a class="dropdown-item fw-bold text-dark" asp-controller="Order" asp-action="AllOrders">
+                                            📋 Gestion des Commandes
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" asp-controller="Product" asp-action="Create">➕ Ajouter un Produit</a>
+                                        <a class="dropdown-item" asp-controller="Category" asp-action="Create">➕ Créer une Catégorie</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="CreateRole">Créer un Rôle</a>
+                                        <a class="dropdown-item" asp-controller="Admin" asp-action="ListRoles">Liste des Rôles</a>
+                                    </div>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <!-- Barre de recherche -->
+                    <form class="d-flex me-3" asp-controller="Product" asp-action="Search" method="get">
+                        <input class="form-control me-sm-2" type="search" placeholder="Rechercher un produit..." name="val" required>
+                        <button class="btn btn-outline-secondary" type="submit">🔍</button>
+                    </form>
+
+                    <!-- Zone de Connexion / Déconnexion -->
+                    <ul class="navbar-nav">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item d-flex align-items-center">
+                                <span class="me-2 text-muted small">👤 @User.Identity.Name</span>
+                                <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        Déconnexion
+                                    </button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">S'inscrire</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm ms-2" asp-controller="Account" asp-action="Login">Se connecter</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Menu latéral catégories : Inclus uniquement si l'utilisateur est connecté -->
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <div class="col-md-2" id="sidebar" style="display: none;">
+                    @await Html.PartialAsync("_CategoriesMenu", ViewData["Categories"] as IEnumerable<TP2.Models.Category>)
+                </div>
+            }
+
+            <!-- Contenu principal : 100% de largeur pour le visiteur, ajustable si connecté -->
+            <div class="@(SignInManager.IsSignedIn(User) ? "col-md-12" : "col-12")" id="mainContent">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Widget Chatbot -->
+    @await Html.PartialAsync("_ChatbotWidget")
+
+    <!-- Scripts JavaScript (Appel unique) -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
