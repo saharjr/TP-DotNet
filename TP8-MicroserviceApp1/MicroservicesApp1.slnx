@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ApiGateway/ApiGateway.csproj" Id="9f1cda98-92a8-47c2-bca8-39cf56f617a4" />
+  <Project Path="OrdersAPI/OrdersAPI.csproj" Id="c7e967bf-0b38-4c7e-aafe-b9dc2187d8cf" />
+  <Project Path="ProductsAPI/ProductsAPI.csproj" />
+  <Project Path="Shared/Shared.csproj" Id="e0761720-a9fb-47d9-a6a4-4dbf5027726f" />
+</Solution>
